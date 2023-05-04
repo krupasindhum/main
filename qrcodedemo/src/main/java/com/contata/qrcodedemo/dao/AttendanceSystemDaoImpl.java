@@ -7,24 +7,29 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
-import com.contata.qrcodedemo.DatabaseConnectionUtil;
+import com.contata.qrcodedemo.util.DatabaseConnectionUtil;
+import com.contata.qrcodedemo.util.TimeInTimeOutDataUtil;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.sql.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+import java.util.*;
+import java.io.*;
 
+@Repository
 public class AttendanceSystemDaoImpl implements AttendanceSystemDao {
 
-
-    public String insertTimeInData(String employeeId, String employeeAttNumber,Date attendenceFlagDate, String longitude, String latitude, String city, String state, String country) {
+    private static final Logger logger = LoggerFactory.getLogger(AttendanceSystemDaoImpl.class);
+    public String insertTimeInData(String employeeId, String employeeAttNumber,Date attendenceFlagDate, String longitude, String latitude, String city, String state, String country,Properties prop) {
         String status="";
         Connection conn = null;
         PreparedStatement prepStmt = null;
         try {
-            conn = DatabaseConnectionUtil.getInstance().getConnection();
+            conn = DatabaseConnectionUtil.getInstance().getConnection(prop);
             if (conn != null) {
-                   System.out.println("hello"+conn);
-                   // String sql="INSERT INTO MIMS_TEST.dbo.EmployeeAttendence (EmployeeId,EmployeeAttNumber,ManagerId,IsActive,Time_In,Time_Out,TimeSpent,AttendenceDate,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn,InIPAddress,OutIPAddress,CrossOverDay,WFH,WFHStatus,CrossOverDayStatus,Remarks,ApprovedAuthority,ApprovedDate,longitude,latitude,city,state,country) VALUES ('342','PV256',NULL,NULL,'2011-04-07 09:15:28.250','2011-04-07 19:26:34.460',NULL,'2011-04-07 09:15:28.250',NULL,NULL,0,'2011-04-07 19:26:34.460','receptionc.cont','receptionc.cont',0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);";
-                   // stmt.executeUpdate(sql);
+                   logger.info("connection is established::"+conn);
                    int genericNullInt=0;
                     prepStmt=conn.prepareStatement("INSERT INTO MIMS_TEST.dbo.EmployeeAttendence (EmployeeId,EmployeeAttNumber,ManagerId,IsActive,Time_In,Time_Out,TimeSpent,AttendenceDate,CreatedBy,CreatedOn,ModifiedBy,ModifiedOn,InIPAddress,OutIPAddress,CrossOverDay,WFH,WFHStatus,CrossOverDayStatus,Remarks,ApprovedAuthority,ApprovedDate,longitude,latitude,city,state,country,AttendenceFlagDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
                     prepStmt.setString(1, employeeId);
@@ -60,43 +65,98 @@ public class AttendanceSystemDaoImpl implements AttendanceSystemDao {
                     }else{
                         status="Your In Time Failed To Update";
                     }
-                    System.out.println("numberOfRowsInserted=" + numberOfRowsInserted);
+                    logger.info("numberOfRowsInserted=" + numberOfRowsInserted);
                 }else{
                 status="Unable to connect Database";
             }
         } catch (SQLException ex) {
+            logger.info("Your In Time Failed To Update"+ex.getMessage());
             status="Your In Time Failed To Update"+ex.getMessage();
         }
         return status;
     }
 
 
-    public String insertTimeOutData(String employeeId, String employeeAttNumber,Date attendenceFlagDate, String longitude, String latitude, String city, String state, String country){
-           String xyz="";
-            return "success";
+    public String insertTimeOutData(String employeeAttNumber,Date attendenceFlagDate,Properties prop){
+        String status="";
+        Connection conn = null;
+        PreparedStatement prepStmt = null;
+        try {
+            conn = DatabaseConnectionUtil.getInstance().getConnection(prop);
+            if (conn != null) {
+                logger.info("connection is established::"+conn);
+                prepStmt=conn.prepareStatement("update MIMS_TEST.dbo.EmployeeAttendence set Time_Out=? where EmployeeAttNumber=? and AttendenceFlagDate=?");
+                prepStmt.setTimestamp(1, new java.sql.Timestamp(new java.util.Date().getTime()));
+                prepStmt.setString(2,employeeAttNumber);
+                prepStmt.setDate(3, attendenceFlagDate);
+                int numberOfRowsInserted = prepStmt.executeUpdate();
+                if(numberOfRowsInserted==1){
+                    status="Your Out Time Updated Successfully";
+                }else{
+                    status="Your Out Time Failed To Update";
+                }
+                logger.info("numberOfRowsInserted=" + numberOfRowsInserted);
+            }else{
+                status="Unable to connect Database";
+            }
+        } catch (SQLException ex) {
+            logger.info("Your Out Time Failed To Update due to "+ex.getMessage());
+            status="Your Out Time Failed To Update due to "+ex.getMessage();
+        }
+        return status;
     }
 
-    public String getEmployeTimeInTimeOutData(String employeeAttNumber,Date attendenceFlagDate) {
-        String attendenceFlagDateData = null;
+    public TimeInTimeOutDataUtil getEmployeTimeInTimeOutData(String employeeAttNumber,Date attendenceFlagDate,Properties prop) {
+        TimeInTimeOutDataUtil attendenceFlagDateData = null;
         try {
-            Connection conn = DatabaseConnectionUtil.getInstance().getConnection();
+            Connection conn = DatabaseConnectionUtil.getInstance().getConnection(prop);
             if (conn != null) {
-                System.out.println("hello" + conn);
-                String QUERY = "select * from MIMS_TEST.dbo.EmployeeAttendence where EmployeeAttNumber=" + employeeAttNumber + " and AttendenceFlagDate=" + attendenceFlagDate;
+                logger.info("connection is established::"+conn);
+                String QUERY = "select * from MIMS_TEST.dbo.EmployeeAttendence where EmployeeAttNumber='" + employeeAttNumber + "' and AttendenceFlagDate='" + attendenceFlagDate+"'";
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(QUERY);
-
                 while (rs.next()) {
-                    //Display values
-                    attendenceFlagDateData = rs.getString("Time_In") + "," + rs.getString("Time_Out") + "," + rs.getString("AttendenceFlagDate");
-                    System.out.print("AttendenceFlagDate: " + attendenceFlagDateData);
+                    attendenceFlagDateData=new TimeInTimeOutDataUtil();
+                    attendenceFlagDateData.setTime_In_data(rs.getString("Time_In"));
+                    attendenceFlagDateData.setTime_Out_data(rs.getString("Time_Out"));
+                    attendenceFlagDateData.setAttendenceFlagDate_data(rs.getString("AttendenceFlagDate"));
+                    //attendenceFlagDateData = rs.getString("Time_In") + "," + rs.getString("Time_Out") + "," + rs.getString("AttendenceFlagDate");
+                    logger.info("AttendenceFlagDate: " + attendenceFlagDateData.toString());
                 }
             }
 
         }catch (Exception ex){
-            System.out.print(ex.getMessage());
+            logger.info(ex.getMessage());
         }
         return attendenceFlagDateData;
+    }
+    public String updateTimeInData(String employeeAttNumber,Date attendenceFlagDate,Properties prop){
+        String status="";
+        Connection conn = null;
+        PreparedStatement prepStmt = null;
+        try {
+            conn = DatabaseConnectionUtil.getInstance().getConnection(prop);
+            if (conn != null) {
+                logger.info("connection is established::"+conn);
+                prepStmt=conn.prepareStatement("update MIMS_TEST.dbo.EmployeeAttendence set Time_In=? where EmployeeAttNumber=? and AttendenceFlagDate=?");
+                prepStmt.setTimestamp(1, new java.sql.Timestamp(new java.util.Date().getTime()));
+                prepStmt.setString(2,employeeAttNumber);
+                prepStmt.setDate(3, attendenceFlagDate);
+                int numberOfRowsInserted = prepStmt.executeUpdate();
+                if(numberOfRowsInserted==1){
+                    status="Your In Time Updated Successfully";
+                }else{
+                    status="Your In Time Failed To Update";
+                }
+                logger.info("numberOfRowsInserted=" + numberOfRowsInserted);
+            }else{
+                status="Unable to connect Database";
+            }
+        } catch (SQLException ex) {
+            logger.info("Your In Time Failed To Update due to "+ex.getMessage());
+            status="Your In Time Failed To Update due to "+ex.getMessage();
+        }
+        return status;
     }
 
 }
