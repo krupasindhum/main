@@ -1,0 +1,14 @@
+<html>
+  <body>
+     <div class="main">
+        <p id="geo" hidden></p>        
+        <p class="main-heading">Welcome To Contata Solutions</p>
+        <p class="main-heading-sub">Enter your key</p>
+        <input  type="text" id="empid" name="empid"  class="main-input-text" ><br><br>
+        <button type="button"  (click)="timeIn()" class="main-button">Time In</button>&nbsp;<button type="button" (click)="timeOut()" class="main-button">Time Out</button><br>
+        <p id="success" class="main-success-text"></p>
+        <p id="error" class="main-error-text"></p>
+    </div>
+  </body>
+</html>
+<router-outlet></router-outlet>

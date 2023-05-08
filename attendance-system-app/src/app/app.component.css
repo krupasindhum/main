@@ -1,0 +1,40 @@
+.main {
+    border: 0px solid;
+    text-align: center;
+  }
+  .main-heading{
+    color: #233A78;
+     font-size: 45px;
+    font-weight: bold;
+  }
+  .main-heading-sub{
+    color: #233A78;
+     font-size: 30px;
+    font-weight: bold;
+  }
+  .main-input-text{
+    height:40px;
+    width: 200px;
+  }
+  .main-button{
+    border: solid 1px #233A78;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    padding: 1px 10px 1px 25px;
+    background: #F7F7F7  no-repeat 5px center;
+    cursor: pointer;
+    color: #233A78;
+    width: 100px;
+    height: 32px;
+    font-weight: bold;
+  }
+  .main-success-text{
+    color: green;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .main-error-text{
+    color: red;
+    font-size: 20px;
+    font-weight: bold;
+  }
